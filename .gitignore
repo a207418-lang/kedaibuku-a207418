@@ -5,3 +5,4 @@ data/
 *.parquet
 kedaibuku_dbt/target/
 kedaibuku_dbt/logs/
+.venv/
