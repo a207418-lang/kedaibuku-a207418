@@ -58,7 +58,7 @@ def latest_fx_rate():
 
 
 def clean_books():
-    b = pd.read_csv(f"{BRONZE}/books.csv").drop_duplicates("book_id")
+    b = pd.read_csv(f"{BRONZE}/books.csv").drop_duplicates("detail_url")
     rate, rate_date = latest_fx_rate()
     b["price_gbp"] = b["price_raw"].str.replace(r"[^0-9.]", "", regex=True).astype(float)
     b["price_myr"] = (b["price_gbp"] * rate).round(2)
