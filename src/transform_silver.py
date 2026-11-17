@@ -54,11 +54,14 @@ def latest_fx_rate():
     latest = sorted(glob.glob(f"{BRONZE}/fx_gbp_*.json"))[-1]
     with open(latest) as f:
         rate = json.load(f)["data"]["rate"]
-    return rate["middle_rate"], rate["date"]
+    middle = rate["middle_rate"]
+    if middle is None:
+        middle = round((rate["buying_rate"] + rate["selling_rate"]) / 2, 4)
+    return middle, rate["date"]
 
 
 def clean_books():
-    b = pd.read_csv(f"{BRONZE}/books.csv").drop_duplicates("detail_url")
+    b = pd.read_csv(f"{BRONZE}/books.csv").drop_duplicates("url")
     rate, rate_date = latest_fx_rate()
     b["price_gbp"] = b["price_raw"].str.replace(r"[^0-9.]", "", regex=True).astype(float)
     b["price_myr"] = (b["price_gbp"] * rate).round(2)
@@ -100,6 +103,8 @@ def clean_orders(customers, books):
 
     reasons = pd.Series("", index=o.index)
     reasons[o["quantity"] <= 0] += "invalid quantity;"
+    reasons[o["quantity"] > 50] += "suspicious quantity;"
+
     reasons[~o["customer_id"].isin(customers["customer_id"])] += "unknown customer;"
     reasons[~o["book_id"].isin(books["book_id"])] += "unknown book;"
     reasons[o["order_date"].isna()] += "bad date;"
